@@ -1,3 +1,9 @@
+"""A fake glove for development without hardware.
+
+You describe a timeline of hand poses (a list of Segments), and SimulatedGlove
+turns it into noisy SensorFrames like the ones the real glove sends.
+"""
+
 import math
 import random
 from dataclasses import dataclass
@@ -30,6 +36,7 @@ FITTED = (True, True, True, False, False)
 
 @dataclass(frozen=True)
 class Segment:
+    """One step of a glove script: hold a shape and tilt for `duration` seconds."""
     duration: float          # seconds
     shape: str = "relaxed"
     pitch_deg: float = 0.0   # + = fingertips tilted down
@@ -43,6 +50,15 @@ def smoothstep(k):
     return k * k * (3 - 2 * k)
 
 class SimulatedGlove:
+    """Plays a list of Segments and returns noisy sensor readings for any time you ask about.
+
+    script:       the Segments to play, in order
+    seed:         random seed, so the same script always gives the same readings
+    adc_noise:    flex sensor noise (standard deviation, in ADC counts)
+    accel_noise:  accelerometer noise (standard deviation, in m/s²)
+    transition_s: how long the hand takes to move from one segment's pose to the next
+    """
+
     def __init__(self, script, seed=7, adc_noise=15.0, accel_noise=0.05, transition_s=0.2):
         self.script = script
         self.rng = random.Random(seed)
@@ -53,6 +69,7 @@ class SimulatedGlove:
 
     @property
     def duration(self):
+        """Total length of the script, in seconds."""
         return sum(seg.duration for seg in self.script)
 
     def _locate(self, t):
@@ -80,7 +97,11 @@ class SimulatedGlove:
         return seg, bends, pitch, roll
 
     def read(self, t):
-        """One SensorFrame for time t — or None if the glove is silent."""
+        """One SensorFrame for time t — or None if the glove is silent.
+
+        Flex readings are each finger's bend mapped onto its SENSOR_RANGE, plus noise.
+        The accelerometer only measures gravity, split across x/y/z by the hand's tilt.
+        """
         seg, bends, pitch, roll = self._pose(t)
         if seg.dropout:
             return None
