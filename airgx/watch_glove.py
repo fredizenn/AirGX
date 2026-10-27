@@ -30,7 +30,9 @@ def main():
     """Read the glove 10 times a second in real time and print one table row per reading."""
     glove = SimulatedGlove(SCRIPT)
     rate_hz = 10
-    print(f"{'t':>4}  {'thumb':<12} {'index':<12} {'middle':<12} {'accel x':>8} {'accel z':>8}")
+    print(
+        f"{'t':>4}  {'thumb':<12} {'index':<12} {'middle':<12} {'accel x':>8} {'accel z':>8}"
+    )
     for i in range(int(glove.duration * rate_hz)):
         t = i / rate_hz
         f = glove.read(t)
@@ -38,7 +40,9 @@ def main():
             print(f"{t:4.1f}  ... no data (glove silent) ...")
         else:
             thumb, index, middle = f.flex_raw[:3]
-            print(f"{t:4.1f}  {bar(thumb)} {bar(index)} {bar(middle)} {f.accel.x:8.2f} {f.accel.z:8.2f}")
+            print(
+                f"{t:4.1f}  {bar(thumb)} {bar(index)} {bar(middle)} {f.accel.x:8.2f} {f.accel.z:8.2f}"
+            )
         time.sleep(1 / rate_hz)
 
 

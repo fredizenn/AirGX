@@ -5,13 +5,16 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 ADC_MAX = 4095  # highest reading a 12-bit ADC can give
 FINGERS = ("thumb", "index", "middle", "ring", "pinky")
 
+
 class Vec3(BaseModel):
     """A 3D reading (x, y, z) from the accelerometer or gyro. Can't be changed once made."""
+
     model_config = ConfigDict(frozen=True)
 
     x: float
     y: float
     z: float
+
 
 class SensorFrame(BaseModel):
     """One snapshot of every sensor on the glove at a single moment.
@@ -25,6 +28,7 @@ class SensorFrame(BaseModel):
 
     Frames are frozen: once made, they can't be edited.
     """
+
     model_config = ConfigDict(frozen=True)
 
     seq: int = Field(ge=0)
@@ -36,7 +40,6 @@ class SensorFrame(BaseModel):
 
     @field_validator("flex_raw")
     @classmethod
-
     def check_flex(cls, v):
         """Reject frames that don't have exactly one reading per finger, or that have readings outside 0..ADC_MAX."""
         if len(v) != len(FINGERS):

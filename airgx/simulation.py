@@ -6,7 +6,7 @@ turns it into noisy SensorFrames like the ones the real glove sends.
 
 import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from airgx.models import ADC_MAX, SensorFrame, Vec3
 
@@ -43,6 +43,7 @@ class Segment:
     roll_deg: float = 0.0    # + = right side tilted down
     clutch: bool = False
     dropout: bool = False    # glove goes silent (link lost)
+    stuck: dict = field(default_factory=dict) # {finger index: raw value} - a broken wire
 
 
 def smoothstep(k):
@@ -107,9 +108,12 @@ class SimulatedGlove:
             return None
 
         flex = []
-        for bend, (straight, bent), fitted in zip(bends, SENSOR_RANGE, FITTED):
+        for i, (bend, (straight, bent), fitted) in enumerate(zip(bends, SENSOR_RANGE, FITTED)):
             if not fitted:
                 flex.append(None)
+                continue
+            if i in seg.stuck:
+                flex.append(seg.stuck[i])
                 continue
             raw = straight + bend * (bent - straight) + self.rng.gauss(0, self.adc_noise)
             flex.append(int(min(ADC_MAX, max(0, round(raw)))))
